@@ -1,0 +1,1047 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>SCIP v2 — Supply Chain Intelligence Platform</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+:root{--nv:#1B2A4A;--bl:#1F5C99;--lb:#D6E4F0;--tl:#0E7C7B;--gn:#1E7C3A;--gl:#D5F0DC;--am:#B8860B;--al:#FFF3CC;--rd:#C0392B;--rl:#FDECEA;--or:#C96A1E;--ol:#FDEBD0;--pu:#5B3A8E;--gy:#F4F6F9;--mg:#DDD;--dk:#555}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#F0F4F8;color:#1a1a1a;font-size:14px}
+.hdr{background:var(--nv);color:#fff;padding:11px 22px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+.hdr h1{font-size:20px;font-weight:900;letter-spacing:-.5px}.hdr p{font-size:11px;color:#7AABCC;margin-top:1px}
+.hdr-r{display:flex;align-items:center;gap:7px}
+.bmod{background:var(--bl);padding:4px 9px;border-radius:4px;font-size:11px;font-weight:700;text-align:center;line-height:1.3;color:#fff}
+.btn{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);border-radius:4px;color:#fff;padding:4px 10px;cursor:pointer;font-size:12px;font-weight:600}
+.btn:hover{background:rgba(255,255,255,.2)}
+.bchat{background:var(--tl);border:none;border-radius:4px;color:#fff;padding:4px 11px;cursor:pointer;font-size:12px;font-weight:700;display:none}
+.bchat:hover{opacity:.85}
+.kdrop{position:absolute;top:52px;right:16px;background:#fff;border-radius:9px;box-shadow:0 6px 24px rgba(0,0,0,.18);padding:15px;width:295px;z-index:500;display:none}
+.kdrop.open{display:block}
+.kdrop h4{color:var(--nv);margin-bottom:8px;font-size:14px}
+.kdrop input{width:100%;border:1px solid var(--mg);border-radius:5px;padding:6px 8px;font-size:12px;font-family:monospace;margin-bottom:6px}
+.kdrop input:focus{outline:none;border-color:var(--bl)}
+.ksave{background:var(--bl);color:#fff;border:none;border-radius:5px;padding:7px;cursor:pointer;font-size:13px;font-weight:700;width:100%}
+.knote{font-size:11px;color:var(--dk);margin-top:7px;line-height:1.5}
+#upsec{max-width:720px;margin:44px auto;padding:0 18px}
+.upcard{background:#fff;border-radius:11px;border:2px dashed var(--bl);padding:38px;text-align:center;cursor:pointer;transition:all .2s}
+.upcard:hover,.upcard.drag{background:var(--lb);border-color:var(--nv)}
+.upcard h2{color:var(--nv);font-size:17px;margin-bottom:7px}
+.upcard p{color:var(--dk);font-size:13px;margin-bottom:14px}
+.fmts{display:flex;gap:5px;justify-content:center;flex-wrap:wrap;margin-bottom:16px}
+.fmt{background:var(--gy);border:1px solid var(--mg);border-radius:3px;padding:3px 7px;font-size:11px;font-weight:700;color:var(--dk)}
+.bup{background:var(--bl);color:#fff;border:none;padding:9px 22px;border-radius:7px;font-size:14px;font-weight:700;cursor:pointer}
+.bup:hover{background:var(--nv)}
+.priv-box{background:#EAF3DE;border:1px solid #a8d5b5;border-radius:8px;padding:11px 15px;margin-top:16px;text-align:left}
+.priv-box p{font-size:12px;color:#1E7C3A;line-height:1.6}
+#progsec{max-width:720px;margin:0 auto;padding:16px;display:none}
+.pgcard{background:#fff;border-radius:10px;padding:22px}.pgcard h3{color:var(--nv);margin-bottom:12px;font-size:15px}
+.step{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:6px;background:var(--gy);margin-bottom:4px}
+.step.act{background:var(--lb)}.step.done{background:var(--gl)}
+.si{font-size:14px;width:20px;text-align:center}.st{font-size:13px;font-weight:500}
+#cmod{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.55);z-index:600;align-items:center;justify-content:center}
+#cmod.open{display:flex}
+.cbox{background:#fff;border-radius:12px;padding:20px;max-width:540px;width:93%;max-height:88vh;overflow-y:auto}
+.cbox h3{color:var(--nv);font-size:15px;margin-bottom:3px}
+.ctop{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:9px}
+.brow{display:flex;align-items:center;gap:8px;padding:7px 11px;background:var(--lb);border-radius:7px;margin-bottom:12px}
+.brow label{font-size:12px;font-weight:700;color:var(--nv)}
+.brow select{border:1px solid var(--bl);border-radius:4px;padding:4px 7px;font-size:12px;font-weight:600;color:var(--nv)}
+.crt{width:100%;border-collapse:collapse;margin-bottom:10px}
+.crt th{background:var(--nv);color:#fff;padding:6px 8px;font-size:11px;font-weight:700;text-align:left}
+.crt td{padding:6px 8px;border-bottom:1px solid #eee;font-size:12px;vertical-align:middle}
+.crt input{width:90px;border:1px solid var(--mg);border-radius:3px;padding:4px 6px;font-size:12px;font-family:monospace}
+.crt input:focus{border-color:var(--bl);outline:none}
+.tlive{font-size:10px;background:var(--gl);color:var(--gn);padding:2px 5px;border-radius:5px;font-weight:700}
+.tdef{font-size:10px;background:var(--al);color:var(--am);padding:2px 5px;border-radius:5px;font-weight:700}
+.blive{background:var(--gl);color:var(--gn);border:1px solid #a8d5b5;padding:5px 10px;border-radius:4px;font-size:11px;font-weight:700;cursor:pointer}
+.brun{background:var(--bl);color:#fff;border:none;padding:10px;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;width:100%;margin-top:4px}
+.brun:hover{background:var(--nv)}
+/* ── MAIN LAYOUT ── */
+#main{display:none}
+#main.vis{display:grid;grid-template-columns:1fr 320px;gap:11px;max-width:1500px;margin:0 auto;padding:13px}
+/* FIX: nc must keep display:grid so dashboard stays visible */
+#main.nc{display:grid;grid-template-columns:1fr;max-width:1500px;margin:0 auto;padding:13px}
+.fbar{background:#fff;border-radius:8px;padding:8px 12px;margin-bottom:10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.fi{display:flex;flex-direction:column}.fl{font-size:10px;color:var(--dk);font-weight:700;text-transform:uppercase}.fv{font-size:13px;font-weight:800;color:var(--nv)}
+.fdv{width:1px;height:22px;background:var(--mg)}
+/* FILTER BAR */
+.fltbar{background:#fff;border-radius:8px;padding:8px 12px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,.06);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.bflt{background:var(--nv);color:#fff;border:none;border-radius:5px;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer}
+.bflt:hover{opacity:.85}
+.flt-badge{background:var(--rd);color:#fff;border-radius:9px;padding:1px 6px;font-size:10px;font-weight:800;margin-left:4px}
+.chips{display:flex;gap:5px;flex-wrap:wrap}
+.chip{background:var(--lb);color:var(--nv);border:1px solid #a8c8e0;border-radius:10px;padding:2px 8px;font-size:11px;font-weight:600;display:flex;align-items:center;gap:4px}
+.chip-x{cursor:pointer;color:var(--rd);font-weight:800;font-size:13px;line-height:1}
+/* FILTER PANEL */
+#flt-panel{display:none;position:fixed;top:0;right:0;width:340px;height:100%;background:#fff;z-index:400;box-shadow:-4px 0 20px rgba(0,0,0,.15);flex-direction:column;overflow:hidden}
+#flt-panel.open{display:flex}
+.fp-hdr{background:var(--nv);color:#fff;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.fp-hdr h3{font-size:14px;font-weight:800}
+.fp-close{background:rgba(255,255,255,.15);border:none;color:#fff;border-radius:3px;padding:2px 8px;cursor:pointer;font-size:13px;font-weight:700}
+.fp-body{flex:1;overflow-y:auto;padding:14px}
+.fp-sec{margin-bottom:18px}
+.fp-sec h4{font-size:12px;font-weight:800;color:var(--nv);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid var(--mg)}
+.fp-search{width:100%;border:1px solid var(--mg);border-radius:5px;padding:5px 8px;font-size:12px;margin-bottom:7px}
+.fp-search:focus{outline:none;border-color:var(--bl)}
+.fp-list{max-height:175px;overflow-y:auto;border:1px solid var(--mg);border-radius:5px}
+.fp-item{display:flex;align-items:center;gap:7px;padding:5px 8px;font-size:12px;cursor:pointer;border-bottom:1px solid #f5f5f5}
+.fp-item:hover{background:var(--gy)}
+.fp-item input{flex-shrink:0;cursor:pointer}
+.fp-item label{flex:1;cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fp-item .fpp{color:var(--dk);font-size:10px;flex-shrink:0}
+.fp-acts{display:flex;gap:6px;margin-bottom:6px}
+.fp-sa{background:var(--gl);color:var(--gn);border:1px solid #a8d5b5;border-radius:4px;padding:3px 8px;font-size:11px;font-weight:700;cursor:pointer}
+.fp-ca{background:var(--rl);color:var(--rd);border:1px solid #f0a0a0;border-radius:4px;padding:3px 8px;font-size:11px;font-weight:700;cursor:pointer}
+.dr{display:flex;align-items:center;gap:7px;margin-bottom:7px}
+.dr label{font-size:11px;color:var(--dk);font-weight:700;white-space:nowrap;width:34px}
+.dr input{flex:1;border:1px solid var(--mg);border-radius:4px;padding:5px 7px;font-size:12px}
+.fp-footer{padding:12px 14px;border-top:1px solid var(--mg);display:flex;gap:8px;flex-shrink:0}
+.fp-apply{flex:1;background:var(--bl);color:#fff;border:none;border-radius:6px;padding:9px;font-size:13px;font-weight:700;cursor:pointer}
+.fp-apply:hover{background:var(--nv)}
+.fp-reset{background:var(--gy);color:var(--dk);border:1px solid var(--mg);border-radius:6px;padding:9px 12px;font-size:12px;font-weight:700;cursor:pointer}
+/* TABS & CARDS */
+.ss{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px}
+.sb{padding:4px 10px;border:2px solid var(--mg);border-radius:4px;background:#fff;font-size:12px;font-weight:700;cursor:pointer;color:var(--dk)}
+.sb.on{background:var(--nv);color:#fff;border-color:var(--nv)}
+.nav{display:flex;gap:2px;margin-bottom:14px;flex-wrap:wrap}
+.tb{padding:6px 11px;border:none;border-radius:6px 6px 0 0;background:#fff;color:var(--dk);font-size:11px;font-weight:700;cursor:pointer;border-bottom:3px solid transparent;transition:all .1s}
+.tb:hover{background:var(--lb);color:var(--nv)}.tb.on{background:var(--nv);color:#fff;border-bottom-color:var(--bl)}
+.tc{display:none}.tc.on{display:block}
+.card{background:#fff;border-radius:9px;padding:15px;margin-bottom:11px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.card h3{color:var(--nv);font-size:13px;margin-bottom:9px;font-weight:800;display:flex;align-items:center;gap:5px}
+.cg{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:8px;margin-bottom:11px}
+.met{background:var(--gy);border-radius:7px;padding:10px 12px;border-left:4px solid var(--bl)}
+.met.r{border-left-color:var(--rd);background:var(--rl)}.met.g{border-left-color:var(--gn);background:var(--gl)}.met.a{border-left-color:var(--am);background:var(--al)}
+.ml{font-size:10px;font-weight:700;color:var(--dk);text-transform:uppercase;letter-spacing:.3px;display:flex;align-items:center;gap:3px}
+.mv{font-size:19px;font-weight:900;color:var(--nv);margin:2px 0 1px}.ms{font-size:11px;color:var(--dk)}
+/* DQ */
+.dqg{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.dqi{display:flex;align-items:flex-start;gap:7px;padding:9px;border-radius:7px;border:1px solid var(--mg)}
+.dqi.ok{background:var(--gl);border-color:#a8d5b5}.dqi.wn{background:var(--al);border-color:#f0d080}.dqi.cr{background:var(--rl);border-color:#f0a0a0}
+.dql{font-size:10px;font-weight:800;color:var(--dk);text-transform:uppercase;display:flex;align-items:center;gap:3px}
+.dqv{font-size:17px;font-weight:900;color:var(--nv)}.dqd{font-size:11px;color:var(--dk);margin-top:1px;line-height:1.4}
+.dqs{text-align:center;padding:14px;background:var(--nv);border-radius:9px;color:#fff;cursor:help}
+.dqsn{font-size:42px;font-weight:900}.dqsl{font-size:11px;color:#7AABCC;margin-top:2px}
+.dqs-hint{font-size:10px;color:rgba(255,255,255,.45);margin-top:3px}
+/* INFO ICON */
+.iico{display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;background:rgba(31,92,153,.12);color:var(--bl);font-size:9px;font-weight:800;cursor:help;border:1px solid rgba(31,92,153,.25);flex-shrink:0}
+/* GLOBAL TOOLTIP */
+#gtip{display:none;position:fixed;background:#fff;border:0.5px solid var(--mg);border-radius:9px;padding:13px 15px;max-width:300px;z-index:999;box-shadow:0 6px 20px rgba(0,0,0,.13);font-size:12px;line-height:1.65;color:var(--dk);pointer-events:none}
+#gtip b{color:var(--nv);display:block;margin-bottom:5px;font-size:13px}
+#gtip .fm{font-family:monospace;background:#eef3f8;padding:3px 7px;border-radius:4px;display:inline-block;margin:3px 0;font-size:11px;color:var(--nv)}
+#gtip ul{padding-left:14px;margin:4px 0}
+#gtip ul li{margin-bottom:2px}
+/* FINDINGS — compact */
+.fn{border-radius:7px;padding:9px 13px;margin-bottom:8px;display:flex;gap:8px;align-items:flex-start;font-size:12px}
+.fn.r{background:var(--rl);color:var(--nv);border:1px solid #f0a0a0}
+.fn.g{background:var(--gl);color:var(--nv);border:1px solid #a8d5b5}
+.fn.a{background:var(--al);color:var(--nv);border:1px solid #f0d080}
+.fn.nv{background:var(--nv);color:#fff}
+.fni{font-size:15px;flex-shrink:0}
+.fnt{font-size:11px;font-weight:800;text-transform:uppercase;margin-bottom:2px}
+.fn.r .fnt{color:var(--rd)}.fn.g .fnt{color:var(--gn)}.fn.a .fnt{color:var(--am)}.fn.nv .fnt{color:#7AABCC}
+.fnx{font-size:12px;line-height:1.45}
+/* TABLES */
+.ts{overflow-x:auto;border-radius:5px;border:1px solid var(--mg)}
+.dt{width:100%;border-collapse:collapse;font-size:12px}
+.dt th{background:var(--nv);color:#fff;padding:5px 8px;text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;white-space:nowrap}
+.dt td{padding:5px 8px;border-bottom:1px solid #eee}.dt tr:hover td{background:var(--gy)}
+.bc{display:flex;align-items:center;gap:4px}
+.br{height:6px;border-radius:3px;background:var(--bl);min-width:2px}
+.br.r{background:var(--rd)}.br.g{background:var(--gn)}.br.a{background:var(--am)}
+.pt{font-size:11px;color:var(--dk);white-space:nowrap}
+.bdg{padding:2px 4px;border-radius:3px;font-size:10px;font-weight:800}
+.br2{background:var(--rl);color:var(--rd)}.bg2{background:var(--gl);color:var(--gn)}.ba2{background:var(--al);color:var(--am)}.bb2{background:var(--lb);color:var(--bl)}
+.cw{position:relative;height:260px;margin-top:7px}.cwsm{position:relative;height:195px;margin-top:7px}
+.crow{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+/* COLLAPSIBLE TABLE */
+.collapse-btn{background:var(--gy);border:1px solid var(--mg);border-radius:4px;padding:3px 9px;font-size:11px;font-weight:700;cursor:pointer;color:var(--dk);margin-bottom:8px}
+.collapse-btn:hover{background:var(--lb)}
+/* TOAST */
+#toast{display:none;position:fixed;bottom:14px;left:50%;transform:translateX(-50%);background:var(--nv);color:#fff;padding:7px 16px;border-radius:18px;font-size:13px;font-weight:700;box-shadow:0 4px 12px rgba(0,0,0,.2);z-index:800}
+/* CHAT PANEL */
+#cpanel{display:flex;flex-direction:column;height:calc(100vh - 64px);position:sticky;top:56px;background:#fff;border-radius:9px;box-shadow:0 2px 10px rgba(0,0,0,.1);overflow:hidden}
+.cphdr{background:var(--nv);color:#fff;padding:9px 11px;display:flex;align-items:center;gap:7px;flex-shrink:0}
+.cpdot{width:7px;height:7px;border-radius:50%;background:#2ECC71;flex-shrink:0}.cpdot.off{background:#95a5a6}
+.cphdr h4{font-size:12px;font-weight:800;flex:1}.cphdr p{font-size:10px;color:#7AABCC}
+.cp-close{background:rgba(255,255,255,.15);border:none;color:#fff;border-radius:3px;padding:2px 7px;cursor:pointer;font-size:13px;font-weight:700;flex-shrink:0}
+.cp-close:hover{background:rgba(255,255,255,.3)}
+.cpmsgs{flex:1;overflow-y:auto;padding:9px;display:flex;flex-direction:column;gap:6px}
+.cm{max-width:94%}.cm.ai{align-self:flex-start}.cm.us{align-self:flex-end}
+.cb{padding:7px 9px;border-radius:7px;font-size:12px;line-height:1.55;white-space:pre-wrap;word-break:break-word}
+.cm.ai .cb{background:var(--gy);color:var(--nv);border-bottom-left-radius:2px}
+.cm.us .cb{background:var(--bl);color:#fff;border-bottom-right-radius:2px}
+.cab{background:var(--gl);color:var(--gn);border:1px solid #a8d5b5;border-radius:5px;padding:5px 8px;font-size:11px;font-weight:700;margin-top:3px}
+.ctyp{align-self:flex-start;padding:7px 9px;border-radius:7px;background:var(--gy);color:var(--dk);font-size:12px}
+.nkm{padding:18px 12px;font-size:12px;color:var(--dk);line-height:1.7}
+.nkm a{color:var(--bl);cursor:pointer;font-weight:700}
+.cpsugg{display:flex;flex-wrap:wrap;gap:4px;padding:5px 7px;border-top:1px solid #f0f0f0;flex-shrink:0}
+.sg{background:var(--gy);border:1px solid var(--mg);border-radius:9px;padding:3px 7px;font-size:11px;cursor:pointer;color:var(--dk)}
+.sg:hover{background:var(--lb);border-color:var(--bl);color:var(--nv)}
+.cpia{padding:7px;border-top:1px solid var(--mg);flex-shrink:0}
+.cprow{display:flex;gap:5px}
+.cpin{flex:1;border:1px solid var(--mg);border-radius:5px;padding:6px 8px;font-size:12px;font-family:inherit;resize:none;height:34px}
+.cpin:focus{outline:none;border-color:var(--bl)}
+.bsnd{background:var(--bl);color:#fff;border:none;border-radius:5px;padding:6px 11px;cursor:pointer;font-size:14px;font-weight:800;flex-shrink:0}
+.bsnd:hover{background:var(--nv)}.bsnd:disabled{opacity:.35;cursor:not-allowed}
+</style>
+</head>
+<body>
+<div id="gtip"></div>
+<!-- FILTER PANEL -->
+<div id="flt-panel">
+  <div class="fp-hdr"><h3>🔽 Filter Data</h3><button class="fp-close" onclick="closeFP()">✕</button></div>
+  <div class="fp-body">
+    <div class="fp-sec">
+      <h4>📅 Date Range</h4>
+      <div class="dr"><label>From</label><input type="date" id="fp-from"></div>
+      <div class="dr"><label>To</label><input type="date" id="fp-to"></div>
+    </div>
+    <div class="fp-sec">
+      <h4>🏭 Vendors <span id="v-cnt" style="font-size:10px;color:var(--dk);font-weight:400;text-transform:none;margin-left:4px"></span></h4>
+      <input class="fp-search" id="fp-vs" placeholder="Search vendors..." oninput="filterList('v',this.value)">
+      <div class="fp-acts"><button class="fp-sa" onclick="selAll('v')">Select All</button><button class="fp-ca" onclick="clrAll('v')">Clear All</button></div>
+      <div class="fp-list" id="fp-vlist"></div>
+    </div>
+    <div class="fp-sec">
+      <h4>📦 Materials <span id="m-cnt" style="font-size:10px;color:var(--dk);font-weight:400;text-transform:none;margin-left:4px"></span></h4>
+      <input class="fp-search" id="fp-ms" placeholder="Search material codes..." oninput="filterList('m',this.value)">
+      <div class="fp-acts"><button class="fp-sa" onclick="selAll('m')">Select All</button><button class="fp-ca" onclick="clrAll('m')">Clear All</button></div>
+      <div class="fp-list" id="fp-mlist"></div>
+    </div>
+  </div>
+  <div class="fp-footer">
+    <button class="fp-reset" onclick="resetFP()">Reset All</button>
+    <button class="fp-apply" onclick="applyFP()">✅ Apply Filters</button>
+  </div>
+</div>
+<!-- HEADER -->
+<div class="hdr">
+  <div><h1>⚡ SCIP</h1><p>Supply Chain Intelligence Platform v2 — Procurement Module</p></div>
+  <div class="hdr-r">
+    <button class="bchat" id="ctoggle" onclick="togChat()">💬 AI Brain</button>
+    <div class="bmod">MODULE 1<br>PROCUREMENT</div>
+    <button class="btn" onclick="togKey()">⚙️ API Key</button>
+  </div>
+</div>
+<div class="kdrop" id="kdrop">
+  <h4>🔑 Claude API Key</h4>
+  <input type="password" id="kinp" placeholder="sk-ant-api03-...">
+  <button class="ksave" onclick="saveKey()">Save &amp; Activate AI Brain</button>
+  <div class="knote">Stored in your browser only — never uploaded.<br>Get your key at: <strong>console.anthropic.com</strong></div>
+</div>
+<!-- UPLOAD -->
+<div id="upsec">
+  <div class="upcard" id="dz">
+    <div style="font-size:38px;margin-bottom:11px">📂</div>
+    <h2>Upload Your ERP Procurement Data</h2>
+    <p>Works with SAP, MYOB, Oracle, Pronto or any ERP export. No template required — columns mapped automatically.</p>
+    <div class="fmts">
+      <span class="fmt">Excel .xlsx</span><span class="fmt">Excel .xls</span><span class="fmt">CSV .csv</span>
+      <span class="fmt">Any column names</span><span class="fmt">Multi-sheet</span><span class="fmt">Multi-currency</span>
+    </div>
+    <button class="bup" onclick="document.getElementById('fi').click()">Choose File</button>
+    <input type="file" id="fi" accept=".xlsx,.xls,.csv" onchange="handleFile(this.files[0])" style="display:none">
+    <div class="priv-box">
+      <p>🔒 <strong>Your data stays on your computer.</strong> Raw files never leave your browser. Only anonymised totals and percentages are sent to the AI — no company names, no vendor names, no identifying information. Powered by Anthropic commercial API (no data retention, no model training).</p>
+    </div>
+  </div>
+</div>
+<!-- PROGRESS -->
+<div id="progsec">
+  <div class="pgcard"><h3>🔍 Reading Your Data...</h3><div id="pgsteps"></div></div>
+</div>
+<!-- CURRENCY MODAL -->
+<div id="cmod">
+  <div class="cbox">
+    <div class="ctop">
+      <div><h3>💱 Currency Settings</h3><p style="font-size:11px;color:var(--dk);margin-top:2px" id="cdesc"></p></div>
+      <button class="blive" id="livebtn" onclick="fetchLive()">🔄 Live Rates</button>
+    </div>
+    <div class="brow">
+      <label>📊 Display values in:</label>
+      <select id="basesel">
+        <option value="USD">USD — US Dollar</option>
+        <option value="AUD">AUD — Australian Dollar</option>
+        <option value="EUR">EUR — Euro</option>
+        <option value="GBP">GBP — British Pound</option>
+        <option value="SAR">SAR — Saudi Riyal</option>
+      </select>
+    </div>
+    <table class="crt"><thead><tr><th>Currency</th><th>Name</th><th>1 Unit = ? USD</th><th>Source</th></tr></thead>
+    <tbody id="crrows"></tbody></table>
+    <p style="font-size:11px;color:var(--dk);margin-bottom:9px">Edit any rate manually if needed.</p>
+    <button class="brun" onclick="confirmRun()">✅ Confirm Rates &amp; Run Analysis</button>
+  </div>
+</div>
+<!-- MAIN -->
+<div id="main">
+  <div id="dash">
+    <div class="fbar" id="fbar"></div>
+    <div class="fltbar">
+      <button class="bflt" onclick="openFP()">🔽 Filters <span class="flt-badge" id="flt-badge" style="display:none">0</span></button>
+      <div class="chips" id="chips"></div>
+    </div>
+    <div class="ss" id="ss"></div>
+    <div class="nav">
+      <button class="tb on" onclick="showTab('tq',this)">🔍 Data Quality</button>
+      <button class="tb" onclick="showTab('tp',this)">📊 Pareto Analysis</button>
+      <button class="tb" onclick="showTab('ts',this)">🏭 Supplier Intelligence</button>
+      <button class="tb" onclick="showTab('tt',this)">📅 Time Intelligence</button>
+      <button class="tb" onclick="showTab('tv',this)">⚠️ Price Variance</button>
+      <button class="tb" onclick="showTab('to',this)">💰 Opportunity Summary</button>
+    </div>
+    <div class="tc on" id="tq"><div id="qcon"></div></div>
+    <div class="tc" id="tp"><div id="pcon"></div></div>
+    <div class="tc" id="ts"><div id="scon"></div></div>
+    <div class="tc" id="tt"><div id="tcon"></div></div>
+    <div class="tc" id="tv"><div id="vcon"></div></div>
+    <div class="tc" id="to"><div id="ocon"></div></div>
+  </div>
+  <div id="cpanel">
+    <div class="cphdr">
+      <div class="cpdot off" id="cpdot"></div>
+      <div style="flex:1"><h4>🤖 SCIP AI Brain</h4><p>Anonymised · Al-Fanar Methodology</p></div>
+      <button class="cp-close" onclick="togChat()" title="Hide chat panel">✕</button>
+    </div>
+    <div class="cpmsgs" id="cpmsgs">
+      <div class="nkm" id="nkm">
+        <p>🔑 Add your Claude API key to activate the AI Brain.</p>
+        <p style="margin-top:6px"><a onclick="togKey()">Click here to enter your API key →</a></p>
+        <p style="margin-top:10px;font-size:11px;color:#999">Free key at <strong>console.anthropic.com</strong></p>
+      </div>
+    </div>
+    <div class="cpsugg" id="cpsugg" style="display:none">
+      <button class="sg" onclick="sg('What are my top 3 savings opportunities?')">Top savings</button>
+      <button class="sg" onclick="sg('Which vendors should I be worried about?')">Vendor risks</button>
+      <button class="sg" onclick="sg('Explain my HHI score')">HHI explained</button>
+      <button class="sg" onclick="sg('Generate a negotiation brief for my top spend material')">Negotiation brief</button>
+    </div>
+    <div class="cpia">
+      <div class="cprow">
+        <textarea class="cpin" id="cpin" placeholder="Ask about your data..." onkeydown="ck(event)" rows="1"></textarea>
+        <button class="bsnd" id="sbtn" onclick="sendMsg()" disabled>↗</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="toast"></div>
+<script>
+// ═══ DATA ════════════════════════════════════════════════════════════
+const FXD={USD:1,SAR:0.2667,EUR:1.09,GBP:1.27,AED:0.2723,CHF:1.13,JPY:0.0067,AUD:0.65,CAD:0.74,SGD:0.75,CNY:0.14,INR:0.012,MYR:0.22,THB:0.028,NZD:0.60,QAR:0.2747,KWD:3.26,BHD:2.65,OMR:2.60,TRY:0.031};
+let FX={...FXD},BCY='USD';
+const CNM={USD:'US Dollar',SAR:'Saudi Riyal',EUR:'Euro',GBP:'British Pound',AED:'UAE Dirham',CHF:'Swiss Franc',JPY:'Japanese Yen',AUD:'Australian Dollar',CAD:'Canadian Dollar',SGD:'Singapore Dollar',CNY:'Chinese Yuan',INR:'Indian Rupee',MYR:'Malaysian Ringgit',THB:'Thai Baht',NZD:'NZ Dollar',QAR:'Qatari Riyal',KWD:'Kuwaiti Dinar',BHD:'Bahraini Dinar',OMR:'Omani Rial',TRY:'Turkish Lira'};
+const CMAP={
+  vendor:['vendor/supplying plant','supplying plant','vendor name','supplier name','creditor name','vendor','supplier','creditor','party'],
+  material:['material number','material code','matnr','part number','part no','stock code','item code','sku','product code','article number','article no','article','material'],
+  desc:['short text','item description','material description','product description','product name','item name','description','desc','text','name'],
+  qty:['order quantity','order qty','purchase qty','ordered qty','quantity ordered','quantity','qty'],
+  price:['net price (doc.cur.)','net price','unit price','price per unit','unit cost','rate','price','cost'],
+  punit:['price unit','price scale','per unit','per','uom'],
+  ccy:['document currency','currency key','currency code','currency','curr','cur'],
+  val:['net order value','net value in doc. cur.','net value','total value','line amount','total amount','extended amount','net amount','amount','value'],
+  date:['document date','posting date','order date','po date','entry date','created on','doc date','date'],
+  po:['purchasing document','purchase order','po number','po no','order number','document','po','order']
+};
+const INTP=[/^\s*dc\s+plant\b/i,/^\s*dist(ribution)?\s+center\b/i,/\bcentralized\s+(purchasing|procurement)\b/i,/^(fg|rm)\s+dc\b/i,/^\d{4}\s*$/,/^cc-\d+$/i,/^plant\s+\d+$/i];
+let SHEETS={},ASHT=null,ADATA=null,DCCYS=[],CHIST=[],ASUM=null;
+let ANON_V={},ANON_VR={},ANON_M={},ANON_MR={};
+let FLT={from:null,to:null,vends:new Set(),mats:new Set()};
+let FLT_EXCL=new Set();
+let _fn='',_chatVisible=true;
+
+// ═══ TOOLTIP ════════════════════════════════════════════════════════
+function showTip(el,html){
+  const t=document.getElementById('gtip');t.innerHTML=html;
+  const r=el.getBoundingClientRect();
+  let left=r.left;if(left+310>window.innerWidth)left=window.innerWidth-320;
+  t.style.left=left+'px';t.style.top=(r.bottom+6)+'px';t.style.display='block';
+}
+function hideTip(){document.getElementById('gtip').style.display='none';}
+function ii(tip){
+  const s=tip.replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\n/g,' ');
+  return `<span class="iico" onmouseenter="showTip(this,'${s}')" onmouseleave="hideTip()">?</span>`;
+}
+
+// ═══ SETTINGS ═══════════════════════════════════════════════════════
+function togKey(){const d=document.getElementById('kdrop');d.classList.toggle('open');const k=localStorage.getItem('scip_k')||'';if(k)document.getElementById('kinp').value=k;}
+function saveKey(){const k=document.getElementById('kinp').value.trim();if(!k){alert('Please enter your API key');return;}localStorage.setItem('scip_k',k);document.getElementById('kdrop').classList.remove('open');updAI();if(ADATA&&CHIST.length===0)initAI();showToast('✅ API Key saved');}
+const gKey=()=>localStorage.getItem('scip_k')||'';
+function updAI(){
+  const ok=!!gKey();
+  const dot=document.getElementById('cpdot');if(dot)dot.className=ok?'cpdot':'cpdot off';
+  const nkm=document.getElementById('nkm');if(nkm)nkm.style.display=ok?'none':'block';
+  const sb=document.getElementById('sbtn');if(sb)sb.disabled=!ok;
+  if(ok)document.getElementById('cpsugg').style.display='flex';
+}
+document.addEventListener('click',e=>{if(!e.target.closest('#kdrop')&&!e.target.closest('.btn'))document.getElementById('kdrop').classList.remove('open');});
+
+// ═══ CHAT TOGGLE — fixed: only hides chat panel, dashboard stays ════
+function togChat(){
+  _chatVisible=!_chatVisible;
+  const p=document.getElementById('cpanel');
+  const m=document.getElementById('main');
+  const b=document.getElementById('ctoggle');
+  if(_chatVisible){
+    p.style.display='flex';
+    m.className='vis';
+    b.textContent='✕ Hide AI';
+  } else {
+    p.style.display='none';
+    m.className='nc'; // nc keeps display:grid with 1 column — dashboard fully visible
+    b.textContent='💬 AI Brain';
+  }
+}
+
+// ═══ FILTER PANEL ════════════════════════════════════════════════════
+function openFP(){if(!ADATA)return;buildFPLists();document.getElementById('flt-panel').classList.add('open');}
+function closeFP(){document.getElementById('flt-panel').classList.remove('open');}
+function buildFPLists(){
+  if(FLT.from)document.getElementById('fp-from').value=FLT.from.toISOString().split('T')[0];
+  if(FLT.to)document.getElementById('fp-to').value=FLT.to.toISOString().split('T')[0];
+  renderFPList('v');renderFPList('m');updCnt();
+}
+function renderFPList(type,q){
+  const items=type==='v'?ADATA.vendP.slice(0,80):ADATA.matP.slice(0,80);
+  const set=type==='v'?FLT.vends:FLT.mats;
+  const html=items
+    .filter(i=>!q||((type==='v'?i.vend:(i.mat||i.desc)).toLowerCase().includes(q.toLowerCase())))
+    .map(i=>{
+      const key=type==='v'?i.vend:(i.mat||i.desc);
+      const lbl=type==='v'?i.vend.substring(0,34):`${(i.mat||'NO CODE').substring(0,16)} ${i.desc.substring(0,16)}`;
+      const chk=set.size===0||set.has(key);
+      const safe=key.replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'&quot;');
+      return`<div class="fp-item"><input type="checkbox" ${chk?'checked':''} onchange="togFLT('${type}','${safe}')"><label title="${lbl}">${lbl}</label><span class="fpp">${i.pct.toFixed(1)}%</span></div>`;
+    }).join('');
+  document.getElementById(type==='v'?'fp-vlist':'fp-mlist').innerHTML=html;
+}
+function filterList(type,q){renderFPList(type,q);}
+function togFLT(type,val){
+  const set=type==='v'?FLT.vends:FLT.mats;
+  const items=type==='v'?ADATA.vendP.slice(0,80):ADATA.matP.slice(0,80);
+  // If currently showing all, expand to all then toggle
+  if(set.size===0)items.forEach(i=>set.add(type==='v'?i.vend:(i.mat||i.desc)));
+  if(set.has(val))set.delete(val);else set.add(val);
+  if(set.size===items.length)set.clear();
+  updCnt();
+}
+function selAll(type){(type==='v'?FLT.vends:FLT.mats).clear();renderFPList(type);updCnt();}
+function clrAll(type){
+  const set=type==='v'?FLT.vends:FLT.mats;
+  const items=type==='v'?ADATA.vendP.slice(0,80):ADATA.matP.slice(0,80);
+  set.clear();items.forEach(i=>set.add(type==='v'?i.vend:(i.mat||i.desc)));
+  renderFPList(type);updCnt();
+}
+function updCnt(){
+  const vc=FLT.vends.size,mc=FLT.mats.size;
+  document.getElementById('v-cnt').textContent=vc>0?`${vc} selected`:'all';
+  document.getElementById('m-cnt').textContent=mc>0?`${mc} selected`:'all';
+}
+function applyFP(){
+  const f=document.getElementById('fp-from').value;
+  const t=document.getElementById('fp-to').value;
+  FLT.from=f?new Date(f):null;FLT.to=t?new Date(t):null;
+  closeFP();refresh();buildChips();
+}
+function resetFP(){
+  FLT={from:null,to:null,vends:new Set(),mats:new Set()};FLT_EXCL=new Set();
+  document.getElementById('fp-from').value='';document.getElementById('fp-to').value='';
+  refresh();buildChips();showToast('✅ All filters cleared');
+}
+function buildChips(){
+  const c=[];
+  if(FLT.from)c.push(`<span class="chip">From: ${FLT.from.toLocaleDateString()}<span class="chip-x" onclick="rmChip('from')">×</span></span>`);
+  if(FLT.to)c.push(`<span class="chip">To: ${FLT.to.toLocaleDateString()}<span class="chip-x" onclick="rmChip('to')">×</span></span>`);
+  if(FLT.vends.size>0)c.push(`<span class="chip">${FLT.vends.size} vendor${FLT.vends.size>1?'s':''}<span class="chip-x" onclick="rmChip('vends')">×</span></span>`);
+  if(FLT.mats.size>0)c.push(`<span class="chip">${FLT.mats.size} material${FLT.mats.size>1?'s':''}<span class="chip-x" onclick="rmChip('mats')">×</span></span>`);
+  if(FLT_EXCL.size>0)c.push(`<span class="chip">${FLT_EXCL.size} AI-excluded<span class="chip-x" onclick="rmChip('excl')">×</span></span>`);
+  document.getElementById('chips').innerHTML=c.join('');
+  const total=FLT.vends.size+(FLT.from?1:0)+(FLT.to?1:0)+FLT.mats.size+FLT_EXCL.size;
+  const b=document.getElementById('flt-badge');b.style.display=total?'inline':'none';b.textContent=total;
+}
+function rmChip(k){
+  if(k==='from')FLT.from=null;else if(k==='to')FLT.to=null;
+  else if(k==='vends')FLT.vends=new Set();else if(k==='mats')FLT.mats=new Set();
+  else if(k==='excl')FLT_EXCL=new Set();
+  refresh();buildChips();
+}
+function refresh(){ADATA=procSheet(SHEETS[ASHT],ASHT);buildFbar();buildDash(ADATA);buildAnonMaps(ADATA);ASUM=buildSum(ADATA);}
+
+// ═══ FILE ═══════════════════════════════════════════════════════════
+const dz=document.getElementById('dz');
+dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('drag');});
+dz.addEventListener('dragleave',()=>dz.classList.remove('drag'));
+dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('drag');if(e.dataTransfer.files[0])handleFile(e.dataTransfer.files[0]);});
+function handleFile(f){
+  if(!f)return;_fn=f.name;
+  document.getElementById('upsec').style.display='none';
+  document.getElementById('progsec').style.display='block';
+  const steps=['Reading file structure...','Detecting currencies...','Mapping columns...','Flagging anomalies...','Preparing currency settings...'];
+  document.getElementById('pgsteps').innerHTML=steps.map((s,i)=>`<div class="step" id="ps${i}"><div class="si">⏳</div><div class="st">${s}</div></div>`).join('');
+  const r=new FileReader();r.onload=async e=>{try{await runProg(e.target.result);}catch(err){alert('Error: '+err.message);}};
+  r.readAsArrayBuffer(f);
+}
+async function runProg(buf){
+  const dl=ms=>new Promise(r=>setTimeout(r,ms));
+  const mk=(i,s)=>{const el=document.getElementById('ps'+i);if(!el)return;el.className='step '+s;el.querySelector('.si').textContent=s==='done'?'✅':s==='act'?'🔄':'❌';};
+  mk(0,'act');await dl(150);
+  const wb=XLSX.read(buf,{type:'array',cellDates:true});
+  SHEETS={};for(const sn of wb.SheetNames)SHEETS[sn]=XLSX.utils.sheet_to_json(wb.Sheets[sn],{header:1,defval:null,raw:true});
+  ASHT=wb.SheetNames[0];mk(0);
+  mk(1,'act');await dl(150);
+  const cs=new Set();
+  for(const sd of Object.values(SHEETS)){
+    const lc=(sd[0]||[]).map(h=>h?String(h).toLowerCase():'');
+    const ci=lc.findIndex(h=>h.includes('currency')||h==='curr'||h==='cur');
+    if(ci>=0)sd.slice(1).forEach(r=>{if(r&&r[ci])cs.add(String(r[ci]).trim().toUpperCase());});
+  }
+  DCCYS=[...cs].filter(c=>c&&c.length>=3&&c.length<=4&&/^[A-Z]+$/.test(c)&&c!=='NAN');
+  if(!DCCYS.length)DCCYS=['USD'];mk(1);
+  for(let i=2;i<=3;i++){mk(i,'act');await dl(120);mk(i);}
+  mk(4,'act');await dl(150);mk(4);await dl(220);
+  document.getElementById('progsec').style.display='none';showCMod();
+}
+
+// ═══ CURRENCY MODAL ══════════════════════════════════════════════════
+function showCMod(){
+  document.getElementById('cdesc').textContent=`Detected ${DCCYS.length} currency/currencies in "${_fn}"`;
+  buildCRows();document.getElementById('cmod').classList.add('open');
+}
+function buildCRows(live){
+  document.getElementById('crrows').innerHTML=DCCYS.map(c=>{
+    const r=FX[c]!==undefined?FX[c]:1;
+    const src=live?`<span class="tlive">LIVE</span>`:`<span class="tdef">DEFAULT</span>`;
+    return`<tr><td><strong style="color:var(--nv)">${c}</strong></td><td style="font-size:11px;color:var(--dk)">${CNM[c]||c}</td><td><input type="number" step="0.00001" id="rt${c}" value="${r}"></td><td>${src}</td></tr>`;
+  }).join('');
+}
+async function fetchLive(){
+  const btn=document.getElementById('livebtn');btn.textContent='⏳...';btn.disabled=true;
+  try{
+    const res=await fetch('https://api.exchangerate-api.com/v4/latest/USD');
+    const d=await res.json();
+    if(d.rates){DCCYS.forEach(c=>{if(c==='USD'){FX.USD=1;return;}if(d.rates[c])FX[c]=parseFloat((1/d.rates[c]).toFixed(6));});buildCRows(true);btn.textContent='✅ Loaded';}
+  }catch(e){btn.textContent='❌ Failed';}
+  setTimeout(()=>{btn.textContent='🔄 Live Rates';btn.disabled=false;},2200);
+}
+function confirmRun(){
+  DCCYS.forEach(c=>{const inp=document.getElementById('rt'+c);if(inp){const v=parseFloat(inp.value);if(!isNaN(v)&&v>0)FX[c]=v;}});
+  BCY=document.getElementById('basesel').value;
+  document.getElementById('cmod').classList.remove('open');
+  ADATA=procSheet(SHEETS[ASHT],ASHT);
+  buildSS(Object.keys(SHEETS));buildFbar();buildDash(ADATA);
+  document.getElementById('main').className='vis';
+  document.getElementById('ctoggle').style.display='block';
+  buildAnonMaps(ADATA);ASUM=buildSum(ADATA);updAI();
+  if(gKey()&&CHIST.length===0)initAI();
+}
+
+// ═══ COLUMN MAPPER ═══════════════════════════════════════════════════
+function mapCols(headers){
+  const map={},lc=headers.map(h=>h?String(h).toLowerCase().trim():'');
+  for(const[f,aliases]of Object.entries(CMAP)){
+    let best={col:-1,sc:0};
+    for(let i=0;i<lc.length;i++){
+      if(!lc[i])continue;
+      for(const a of aliases){
+        let sc=0;
+        if(lc[i]===a)sc=1000+a.length;
+        else if(a.length>=4&&lc[i].includes(a))sc=a.length;
+        if(sc>best.sc)best={col:i,sc};
+      }
+    }
+    if(best.col>=0)map[f]=best.col;
+  }
+  return map;
+}
+
+// ═══ SHEET PROCESSOR ═════════════════════════════════════════════════
+function procSheet(raw,sn){
+  if(!raw||raw.length<2)return null;
+  let hr=0;
+  for(let i=0;i<Math.min(10,raw.length);i++){if(raw[i]&&raw[i].filter(c=>c!==null&&c!=='').length>=3){hr=i;break;}}
+  const headers=(raw[hr]||[]).map(h=>h?String(h):'');
+  const cm=mapCols(headers);
+  const rows=[],an={ghost:[],neg:[],noMat:[],noVend:[],intl:[]};
+  for(let ri=hr+1;ri<raw.length;ri++){
+    const row=raw[ri];if(!row||row.every(c=>c===null||c===''))continue;
+    const g=f=>{const i=cm[f];return i!==undefined?row[i]:null;};
+    const qty=sn2(g('qty')),price=sn2(g('price')),punit=sn2(g('punit'))||1,val=sn2(g('val'));
+    const ccy=g('ccy')?String(g('ccy')).trim().toUpperCase():'USD';
+    const mat=g('material')?String(g('material')).trim():'';
+    const vend=g('vendor')?String(g('vendor')).trim():'';
+    const desc=g('desc')?String(g('desc')).trim():'';
+    const po=g('po')?String(g('po')).trim():'';
+    let dt=null;const rd=g('date');
+    if(rd){if(rd instanceof Date)dt=rd;else if(typeof rd==='number'){const d=XLSX.SSF.parse_date_code(rd);if(d)dt=new Date(d.y,d.m-1,d.d);}else{const d=new Date(rd);if(!isNaN(d.getTime()))dt=d;}}
+    const fx=FX[ccy]||1,vusd=val*fx;
+    const isG=qty>0&&price===0&&val===0;
+    const isN=qty<0||val<0;
+    const noM=!mat||mat===''||mat==='0'||mat.toUpperCase()==='N/A';
+    const isI=vend?INTP.some(p=>p.test(vend.trim())):false;
+    const matKey=mat&&mat!==''?mat:desc;
+    const vendOk=FLT.vends.size===0||FLT.vends.has(vend);
+    const matOk=FLT.mats.size===0||FLT.mats.has(matKey);
+    const dtOk=(!FLT.from||!dt||dt>=FLT.from)&&(!FLT.to||!dt||dt<=FLT.to);
+    const exl=FLT_EXCL.has(vend)||!vendOk||!matOk||!dtOk;
+    const rec={po,vend,dt,mat,desc,qty,price,punit,ccy,val,vusd,fx,isG,isN,noM,isI,exl,
+      month:dt?`${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}`:null};
+    rows.push(rec);
+    if(isG)an.ghost.push(rec);if(isN)an.neg.push(rec);
+    if(noM)an.noMat.push(rec);if(!vend)an.noVend.push(rec);if(isI)an.intl.push(rec);
+  }
+  const exclIdx=new Set();
+  rows.forEach((r,i)=>{if(r.isG||r.isN||r.vusd<=0||r.exl)exclIdx.add(i);});
+  const clean=rows.filter((_,i)=>!exclIdx.has(i));
+  const tot=clean.reduce((s,r)=>s+r.vusd,0);
+  const mmap={};
+  clean.forEach(r=>{
+    const key=r.mat&&r.mat!==''?r.mat:`__NC__${r.desc}`;
+    if(!mmap[key])mmap[key]={key,mat:r.mat||'',desc:r.desc||r.mat||'Unknown',usd:0,rows:0,vends:new Set(),priceRecs:[],hasCode:!!r.mat&&r.mat!==''};
+    if(r.desc&&r.desc.length>mmap[key].desc.length)mmap[key].desc=r.desc;
+    mmap[key].usd+=r.vusd;mmap[key].rows++;
+    if(r.vend)mmap[key].vends.add(r.vend);
+    if(r.price>0)mmap[key].priceRecs.push({p:r.price/(r.punit||1)*r.fx,vend:r.vend,dt:r.dt});
+  });
+  const matP=Object.values(mmap).sort((a,b)=>b.usd-a.usd).map((m,i)=>({...m,vends:[...m.vends],rank:i+1,pct:m.usd/tot*100}));
+  let cu=0;matP.forEach(m=>{cu+=m.pct;m.cum=cu;});
+  const vmap={};
+  clean.forEach(r=>{
+    const k=r.vend||'UNKNOWN';
+    if(!vmap[k])vmap[k]={vend:k,usd:0,rows:0,mats:new Set(),isI:r.isI};
+    vmap[k].usd+=r.vusd;vmap[k].rows++;if(r.mat)vmap[k].mats.add(r.mat);
+  });
+  const vendP=Object.values(vmap).sort((a,b)=>b.usd-a.usd).map((v,i)=>({...v,mats:[...v.mats],rank:i+1,pct:v.usd/tot*100}));
+  let vc=0;vendP.forEach(v=>{vc+=v.pct;v.cum=vc;});
+  const hhi=Math.round(vendP.reduce((s,v)=>s+(v.pct/100)**2,0)*10000);
+  const mm={};clean.forEach(r=>{if(!r.month)return;mm[r.month]=(mm[r.month]||0)+r.vusd;});
+  const monthly=Object.entries(mm).sort((a,b)=>a[0].localeCompare(b[0])).map(([m,v])=>({m,v}));
+  const avgM=monthly.length?monthly.reduce((s,m)=>s+m.v,0)/monthly.length:0;
+  const dead=monthly.filter(m=>m.v<avgM*0.65);
+  const vi=[];
+  matP.forEach(m=>{
+    if(m.priceRecs.length<2)return;
+    const prices=m.priceRecs.map(p=>p.p).filter(p=>p>0);if(prices.length<2)return;
+    const minP=Math.min(...prices),maxP=Math.max(...prices);
+    if(minP>0&&maxP/minP>1.05){
+      const above=m.priceRecs.filter(r=>r.p>minP);
+      const lk=above.reduce((s,r)=>s+(r.p-minP),0);
+      vi.push({...m,minP,maxP,vp:(maxP-minP)/minP*100,lk,
+        lkCalc:`${above.length} purchase${above.length>1?'s':''} above best price ${da(minP)}`});
+    }
+  });
+  vi.sort((a,b)=>b.vp-a.vp);
+  const cb={};rows.forEach(r=>{if(!cb[r.ccy])cb[r.ccy]={n:0,usd:0};cb[r.ccy].n++;if(!r.isN)cb[r.ccy].usd+=r.vusd;});
+  const ghostPct=an.ghost.length/(rows.length||1)*100;
+  const missPct=an.noMat.length/(rows.length||1)*100;
+  const qs=Math.max(0,Math.round(100-ghostPct*0.5-missPct*0.3));
+  const af=(FLT.vends.size>0?1:0)+(FLT.mats.size>0?1:0)+(FLT.from?1:0)+(FLT.to?1:0)+FLT_EXCL.size;
+  return{sn,headers,cm,rows,clean,tot,matP,vendP,hhi,monthly,avgM,dead,vi,an,cb,qs,ghostPct,missPct,
+    ccys:[...new Set(rows.map(r=>r.ccy))],N:rows.length,Nc:clean.length,
+    Ng:an.ghost.length,Nn:an.neg.length,Nm:an.noMat.length,Ni:an.intl.length,
+    Uv:vendP.length,Um:matP.length,excl:af};
+}
+
+// ═══ ANON ════════════════════════════════════════════════════════════
+function buildAnonMaps(d){
+  ANON_V={};ANON_VR={};ANON_M={};ANON_MR={};
+  d.vendP.forEach((v,i)=>{const a=`Vendor_${i+1}`;ANON_V[v.vend]=a;ANON_VR[a]=v.vend;});
+  d.matP.forEach((m,i)=>{const k=m.mat||m.key;const a=`Material_${i+1}`;ANON_M[k]=a;ANON_MR[a]=k;});
+}
+
+// ═══ UI ══════════════════════════════════════════════════════════════
+function buildSS(names){
+  const el=document.getElementById('ss');if(names.length<=1){el.style.display='none';return;}
+  el.innerHTML='<span style="font-size:11px;font-weight:700;color:var(--dk);align-self:center">Sheets:</span>'+
+    names.map(n=>`<button class="sb ${n===ASHT?'on':''}" onclick="swSh('${n}')">${n}</button>`).join('');
+}
+function swSh(n){ASHT=n;ADATA=procSheet(SHEETS[n],n);buildFbar();buildDash(ADATA);}
+function buildFbar(){
+  const d=ADATA;if(!d)return;
+  document.getElementById('fbar').innerHTML=`
+    <div class="fi"><div class="fl">File</div><div class="fv">📄 ${_fn}</div></div><div class="fdv"></div>
+    <div class="fi"><div class="fl">Total Rows</div><div class="fv">${d.N.toLocaleString()}</div></div><div class="fdv"></div>
+    <div class="fi"><div class="fl">Currencies</div><div class="fv">${d.ccys.join(', ')}</div></div><div class="fdv"></div>
+    <div class="fi"><div class="fl">Spend (${BCY})</div><div class="fv" style="color:var(--bl)">${da(d.tot)}</div></div><div class="fdv"></div>
+    <div class="fi"><div class="fl">Quality</div><div class="fv" style="color:${d.qs>70?'var(--gn)':d.qs>50?'var(--am)':'var(--rd)'}">${d.qs}%</div></div><div class="fdv"></div>
+    <div class="fi"><div class="fl">Vendors</div><div class="fv">${d.Uv}</div></div><div class="fdv"></div>
+    <div class="fi"><div class="fl">Materials</div><div class="fv">${d.Um}</div></div>
+    ${d.excl>0?`<div class="fdv"></div><div class="fi"><div class="fl">Filters</div><div class="fv" style="color:var(--or)">${d.excl} active</div></div>`:''}`;
+}
+function buildDash(d){
+  if(!d)return;
+  try{Chart.helpers.each(Chart.instances,c=>c.destroy());}catch(e){}
+  buildQ(d);buildP(d);buildS(d);buildT(d);buildV(d);buildO(d);
+}
+
+// ─── TAB 1: DATA QUALITY ─────────────────────────────────────────────
+function buildQ(d){
+  const a=d.an;
+  const CC={USD:'#1F5C99',SAR:'#1E7C3A',EUR:'#0E7C7B',GBP:'#B8860B',CHF:'#5B3A8E',AED:'#C96A1E',JPY:'#C0392B',AUD:'#0E6B8B'};
+  const crow=Object.entries(d.cb).sort((x,y)=>y[1].usd-x[1].usd).map(([c,v])=>`
+    <tr><td><strong style="color:${CC[c]||'#555'}">${c}</strong></td>
+    <td style="font-size:11px;color:var(--dk)">${CNM[c]||c}</td>
+    <td>${v.n.toLocaleString()}</td>
+    <td style="font-family:monospace;font-size:11px">= ${(FX[c]||1).toFixed(5)} USD</td>
+    <td style="font-weight:700">${da(v.usd)}</td>
+    <td><div class="bc"><div class="br" style="width:${Math.min(v.usd/d.tot*150,150)}px;background:${CC[c]||'var(--bl)'}"></div><span class="pt">${(v.usd/d.tot*100).toFixed(1)}%</span></div></td></tr>`).join('');
+  const iv=[...new Set(a.intl.map(r=>r.vend))];
+
+  // Tooltip content (all detail hidden here)
+  const scoreTip=`<b>How the score is calculated</b><span class="fm">Score = 100 − (Ghost% × 0.5) − (NoCode% × 0.3)</span>Ghost orders penalise more (×0.5) — invisible to spend analysis. Missing codes penalise less (×0.3) — spend is real but unattributed.<br><br><b>Your numbers:</b><ul><li>Ghost: ${d.Ng.toLocaleString()} / ${d.N.toLocaleString()} = ${d.ghostPct.toFixed(1)}% → −${(d.ghostPct*0.5).toFixed(1)} pts</li><li>No code: ${d.Nm.toLocaleString()} / ${d.N.toLocaleString()} = ${d.missPct.toFixed(1)}% → −${(d.missPct*0.3).toFixed(1)} pts</li><li><strong>Final: ${d.qs}%</strong></li></ul>80–100% Good · 60–79% Moderate · &lt;60% Needs cleaning`;
+  const ghostTip=`<b>Ghost Orders — What they are</b>Rows where quantity &gt; 0 but price = 0 and value = 0. These are POs created in SAP before a price was confirmed — common when raising orders against a framework not yet finalised. Completely excluded from all spend calculations.`;
+  const retTip=`<b>Returns / Negatives</b>Rows where quantity or value is less than zero. These are return orders, reversals, or credit notes. Isolated and excluded from spend totals — visible in the Returns section of Opportunity Summary.`;
+  const noMatTip=`<b>No Material Code</b>Rows with no SKU or material number. Spend value is real and included in totals — but items cannot be grouped or forecast. They appear as "NO CODE" in Pareto. Common causes: service orders, ad-hoc purchases, or data entry gaps.`;
+  const intlTip=`<b>Internal Entries</b>Entries matching SAP internal cost centre patterns — short 4-digit codes, DC Plant prefixes, CC-001 codes. Flagged for review only — not automatically excluded. Real external vendor names are never flagged by this check.`;
+  const rowTip=`<b>Row Count Formula</b><span class="fm">Clean = Total − (Ghost ∪ Returns)</span>Union logic — no row counted twice. A row that is both ghost and negative is excluded once, not twice.<br><br>${d.N.toLocaleString()} total − ${d.Ng.toLocaleString()} ghost − ${d.Nn.toLocaleString()} returns = <strong>${d.Nc.toLocaleString()} clean</strong><br><br>The ${d.Nm.toLocaleString()} rows without a material code are included in clean — real spend, no SKU.`;
+
+  const ih=iv.length?`<div class="card"><h3>🏭 Possible SAP Internal Entries (${iv.length}) ${ii(intlTip)}</h3>
+    <div class="fn a" style="margin-bottom:8px"><div class="fni">ℹ️</div><div><div class="fnt">Review Required</div>
+    <div class="fnx">SCIP flagged these as possible SAP cost centres. If any are real external vendors, the flag can be ignored. Use the AI Brain to exclude confirmed internal entries.</div></div></div>
+    <div class="ts"><table class="dt"><thead><tr><th>Entry</th><th>PO Lines</th><th>Value</th><th>Status</th></tr></thead><tbody>
+    ${iv.slice(0,20).map(v=>{const ll=a.intl.filter(r=>r.vend===v);return`<tr><td style="font-size:11px;font-weight:700">${v}</td><td>${ll.length}</td><td>${da(ll.reduce((s,r)=>s+r.vusd,0))}</td><td><span class="bdg ba2">Review</span></td></tr>`;}).join('')}
+    </tbody></table></div></div>`:'';;
+
+  document.getElementById('qcon').innerHTML=`
+    <div style="display:grid;grid-template-columns:150px 1fr;gap:10px;margin-bottom:11px">
+      <div class="dqs" onmouseenter="showTip(this,'${scoreTip.replace(/\\/g,'\\\\').replace(/'/g,"\\'")}')" onmouseleave="hideTip()">
+        <div class="dqsn">${d.qs}%</div>
+        <div class="dqsl">Data Quality Score</div>
+        <div style="font-size:10px;color:${d.qs>=80?'#5DCAA5':d.qs>=60?'#FAC775':'#F09595'};margin-top:3px">${d.qs>=80?'Good':'d.qs>=60?Moderate':'Needs cleaning'}</div>
+        <div class="dqs-hint">Hover for formula</div>
+      </div>
+      <div class="dqg" style="align-content:start">
+        <div class="dqi ${a.ghost.length===0?'ok':'cr'}">
+          <div style="font-size:16px">${a.ghost.length===0?'✅':'🚨'}</div>
+          <div><div class="dql">Ghost Orders ${ii(ghostTip)}</div><div class="dqv">${a.ghost.length.toLocaleString()}</div><div class="dqd">Qty &gt; 0, price = 0 — excluded</div></div>
+        </div>
+        <div class="dqi ${a.neg.length===0?'ok':'wn'}">
+          <div style="font-size:16px">${a.neg.length===0?'✅':'⚠️'}</div>
+          <div><div class="dql">Returns / Negatives ${ii(retTip)}</div><div class="dqv">${a.neg.length.toLocaleString()}</div><div class="dqd">Returns isolated — excluded from totals</div></div>
+        </div>
+        <div class="dqi ${a.noMat.length===0?'ok':'wn'}">
+          <div style="font-size:16px">${a.noMat.length===0?'✅':'⚠️'}</div>
+          <div><div class="dql">No Material Code ${ii(noMatTip)}</div><div class="dqv">${a.noMat.length.toLocaleString()}</div><div class="dqd">Included in totals — shown as NO CODE</div></div>
+        </div>
+        <div class="dqi ${a.intl.length===0?'ok':'wn'}">
+          <div style="font-size:16px">${a.intl.length===0?'✅':'⚠️'}</div>
+          <div><div class="dql">Internal Entries ${ii(intlTip)}</div><div class="dqv">${a.intl.length.toLocaleString()}</div><div class="dqd">Review list below if present</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>📊 Row Count ${ii(rowTip)}</h3>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:7px;text-align:center">
+        <div style="padding:9px;background:var(--gy);border-radius:6px"><div style="font-size:17px;font-weight:900;color:var(--nv)">${d.N.toLocaleString()}</div><div style="font-size:10px;color:var(--dk);font-weight:700;text-transform:uppercase;margin-top:2px">Total in File</div></div>
+        <div style="padding:9px;background:var(--rl);border-radius:6px"><div style="font-size:17px;font-weight:900;color:var(--rd)">${(d.Ng+d.Nn).toLocaleString()}</div><div style="font-size:10px;color:var(--dk);font-weight:700;text-transform:uppercase;margin-top:2px">Excluded</div></div>
+        <div style="padding:9px;background:var(--gl);border-radius:6px"><div style="font-size:17px;font-weight:900;color:var(--gn)">${d.Nc.toLocaleString()}</div><div style="font-size:10px;color:var(--dk);font-weight:700;text-transform:uppercase;margin-top:2px">Clean Rows</div></div>
+        <div style="padding:9px;background:var(--al);border-radius:6px"><div style="font-size:17px;font-weight:900;color:var(--am)">${d.Nm.toLocaleString()}</div><div style="font-size:10px;color:var(--dk);font-weight:700;text-transform:uppercase;margin-top:2px">No Code (in clean)</div></div>
+      </div>
+    </div>
+    <div class="card"><h3>💱 Currency Breakdown</h3>
+      <div class="ts"><table class="dt"><thead><tr><th>Currency</th><th>Name</th><th>Rows</th><th>Rate (1 unit)</th><th>Spend Converted</th><th>% Total</th></tr></thead>
+      <tbody>${crow}</tbody></table></div>
+    </div>${ih}`;
+}
+
+// ─── TAB 2: PARETO ───────────────────────────────────────────────────
+function buildP(d){
+  const top=d.matP.slice(0,30),cls80=d.matP.filter(m=>m.cum<=80).length;
+  const ptip=`<b>Pareto / ABC Analysis</b>All clean PO lines grouped by Material Code. Sorted highest spend to lowest. Cumulative % added.<br><br>Class A (≤80% cumulative) = negotiation targets<br>Class B (80–95%) = secondary items<br>Class C (&gt;95%) = tail spend<br><br>Aggregated by Material Code as primary key. Items without a code grouped as "NO CODE".`;
+  const rows=top.map(m=>`<tr>
+    <td style="font-weight:900;text-align:center;color:${m.cum<=80?'var(--bl)':'var(--dk)'}">${m.rank}</td>
+    <td style="font-size:11px;font-weight:700;color:var(--nv)" title="${m.mat}">${m.mat||'NO CODE'}</td>
+    <td style="font-size:11px" title="${m.desc}">${m.desc.substring(0,28)}</td>
+    <td style="font-weight:700">${da(m.usd)}</td>
+    <td><div class="bc"><div class="br ${m.cum<=80?'':'a'}" style="width:${Math.min(m.pct*5,140)}px"></div><span class="pt">${m.pct.toFixed(1)}%</span></div></td>
+    <td>${m.rows}</td><td>${m.vends.length}</td>
+    <td><span class="bdg ${m.cum<=80?'br2':m.cum<=95?'ba2':'bb2'}">${m.cum<=80?'A':m.cum<=95?'B':'C'}</span></td>
+    <td style="font-size:11px;color:var(--dk)">${m.cum.toFixed(1)}%</td></tr>`).join('');
+  document.getElementById('pcon').innerHTML=`
+    <div class="cg">
+      <div class="met"><div class="ml">Class A Materials ${ii(ptip)}</div><div class="mv">${cls80}</div><div class="ms">Drive 80% of spend</div></div>
+      <div class="met r"><div class="ml">Total Material Codes</div><div class="mv">${d.Um}</div><div class="ms">Unique in dataset</div></div>
+      <div class="met a"><div class="ml">Top Material Share</div><div class="mv">${d.matP[0]?.pct.toFixed(1)||0}%</div><div class="ms">${(d.matP[0]?.desc||'').substring(0,22)}</div></div>
+      <div class="met g"><div class="ml">Total Spend (${BCY})</div><div class="mv">${da(d.tot)}</div><div class="ms">Clean rows only</div></div>
+    </div>
+    <div class="card"><h3>📊 Pareto Chart — Top 25 Materials</h3><div class="cw"><canvas id="pc"></canvas></div></div>
+    <div class="card"><h3>📋 Material Ranking ${ii(ptip)}</h3>
+      <div class="ts"><table class="dt"><thead><tr><th>#</th><th>Material Code</th><th>Description</th><th>Spend</th><th>% Total</th><th>PO Lines</th><th>Vendors</th><th>Class</th><th>Cumulative</th></tr></thead>
+      <tbody>${rows}</tbody></table></div></div>`;
+  const t25=d.matP.slice(0,25);
+  new Chart(document.getElementById('pc'),{
+    data:{labels:t25.map(m=>(m.mat||m.desc).substring(0,11)),
+      datasets:[{type:'bar',label:'% Spend',data:t25.map(m=>+m.pct.toFixed(2)),
+        backgroundColor:t25.map(m=>m.cum<=80?'rgba(31,92,153,.82)':'rgba(184,134,11,.5)'),yAxisID:'y'},
+        {type:'line',label:'Cumulative %',data:t25.map(m=>+m.cum.toFixed(1)),
+          borderColor:'#C0392B',borderWidth:2,pointRadius:2,fill:false,yAxisID:'y2'}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:'top',labels:{font:{size:11}}}},
+      scales:{y:{title:{display:true,text:'% Spend'}},y2:{position:'right',title:{display:true,text:'Cumulative %'},max:100,grid:{drawOnChartArea:false}}}}});
+}
+
+// ─── TAB 3: SUPPLIER INTELLIGENCE ────────────────────────────────────
+function buildS(d){
+  const hhi=d.hhi;
+  const hhiLvl=hhi>5000?'EXTREME':hhi>2500?'HIGH':hhi>1500?'MODERATE':'LOW';
+  const hhiClr=hhi>2500?'r':hhi>1500?'a':'g';
+  const t1=d.vendP[0]?.pct||0,t3=d.vendP.slice(0,3).reduce((s,v)=>s+v.pct,0);
+  const hhiTip=`<b>HHI — Herfindahl-Hirschman Index</b><span class="fm">HHI = Σ (vendor share %)² × 10,000</span>Calculated across ALL ${d.Uv} vendors. Small vendors contribute almost nothing (0.5² = 0.003). Dominant vendors drive the score.<br><br>0–1,500 Low (competitive)<br>1,500–2,500 Moderate<br>2,500–5,000 High<br>5,000–10,000 Extreme`;
+  const hhiRows=d.vendP.slice(0,10).map((v,i)=>{
+    const c=Math.round((v.pct/100)**2*10000);
+    return`<tr><td style="font-size:11px">${v.vend.substring(0,34)}</td><td style="font-family:monospace">${v.pct.toFixed(2)}%</td><td style="font-family:monospace">${v.pct.toFixed(2)}² = ${(v.pct**2).toFixed(1)}</td><td style="font-weight:700;color:${c>500?'var(--rd)':c>100?'var(--am)':'var(--dk)'}">${c}</td></tr>`;}).join('');
+  const hhiRem=Math.round(d.vendP.slice(10).reduce((s,v)=>s+(v.pct/100)**2,0)*10000);
+  const rows=d.vendP.slice(0,20).map(v=>`<tr>
+    <td style="font-weight:900;text-align:center;color:var(--bl)">${v.rank}</td>
+    <td style="font-size:11px;font-weight:600">${v.vend.substring(0,34)} ${v.isI?'<span class="bdg ba2">SAP</span>':''}</td>
+    <td style="font-weight:700">${da(v.usd)}</td>
+    <td><div class="bc"><div class="br ${v.pct>20?'r':v.pct>10?'a':''}" style="width:${Math.min(v.pct*5,140)}px"></div><span class="pt">${v.pct.toFixed(1)}%</span></div></td>
+    <td>${v.rows}</td><td>${v.mats.length}</td>
+    <td><span class="bdg ${v.pct>15?'br2':v.pct>5?'ba2':'bg2'}">${v.pct>15?'HIGH RISK':v.pct>5?'WATCH':'OK'}</span></td></tr>`).join('');
+  let hShown=false;
+  document.getElementById('scon').innerHTML=`
+    <div class="cg">
+      <div class="met ${hhiClr}"><div class="ml">Portfolio HHI ${ii(hhiTip)}</div><div class="mv">${hhi.toLocaleString()}</div><div class="ms">${hhiLvl} RISK</div></div>
+      <div class="met r"><div class="ml">Top Vendor Share</div><div class="mv">${t1.toFixed(1)}%</div><div class="ms">${(d.vendP[0]?.vend||'').substring(0,22)}</div></div>
+      <div class="met a"><div class="ml">Top 3 Combined</div><div class="mv">${t3.toFixed(1)}%</div><div class="ms">of total spend</div></div>
+      <div class="met"><div class="ml">Total Vendors</div><div class="mv">${d.Uv}</div><div class="ms">In clean data</div></div>
+    </div>
+    ${hhi>2000?`<div class="fn r"><div class="fni">🚨</div><div><div class="fnt">Concentration Risk — HHI ${hhi.toLocaleString()} (${hhiLvl})</div>
+      <div class="fnx">If your top vendor disrupts supply, ${t1.toFixed(0)}% of procurement spend is immediately at risk. Recommendation: dual-source top 3 Class A materials.</div></div></div>`:''}
+    <div class="card">
+      <h3>🔢 HHI Breakdown ${ii(hhiTip)} <button class="collapse-btn" id="hhiToggle" onclick="toggleHHI()">Show calculation</button></h3>
+      <div id="hhiTable" style="display:none">
+        <div class="ts"><table class="dt">
+          <thead><tr><th>Vendor</th><th>Share %</th><th>Calculation</th><th>HHI contribution</th></tr></thead>
+          <tbody>${hhiRows}
+            <tr style="background:var(--gy)"><td style="font-weight:700">Remaining ${d.Uv-10} vendors</td><td>—</td><td>—</td><td style="font-weight:700">${hhiRem}</td></tr>
+            <tr style="background:var(--lb)"><td style="font-weight:800;color:var(--nv)">TOTAL HHI</td><td colspan="2"></td><td style="font-weight:900;font-size:14px;color:var(--nv)">${hhi.toLocaleString()}</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+    </div>
+    <div class="crow">
+      <div class="card"><h3>🥧 Vendor Distribution</h3><div class="cwsm"><canvas id="vpie"></canvas></div></div>
+      <div class="card"><h3>📊 Top 10 Vendors</h3><div class="cwsm"><canvas id="vbar"></canvas></div></div>
+    </div>
+    <div class="card"><h3>📋 Vendor Intelligence — Top 20</h3>
+      <div class="ts"><table class="dt"><thead><tr><th>#</th><th>Vendor</th><th>Spend</th><th>% Total</th><th>PO Lines</th><th>Material Codes</th><th>Risk</th></tr></thead>
+      <tbody>${rows}</tbody></table></div></div>`;
+  const t8=d.vendP.slice(0,8),oth=d.vendP.slice(8).reduce((s,v)=>s+v.pct,0);
+  new Chart(document.getElementById('vpie'),{type:'doughnut',
+    data:{labels:[...t8.map(v=>v.vend.substring(0,14)),'Others'],
+      datasets:[{data:[...t8.map(v=>v.pct),oth],backgroundColor:['#1B2A4A','#1F5C99','#C0392B','#B8860B','#0E7C7B','#1E7C3A','#5B3A8E','#C96A1E','#888']}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{font:{size:10}}}}}});
+  new Chart(document.getElementById('vbar'),{type:'bar',
+    data:{labels:d.vendP.slice(0,10).map(v=>v.vend.substring(0,12)),
+      datasets:[{label:'Spend',data:d.vendP.slice(0,10).map(v=>v.usd),backgroundColor:'rgba(31,92,153,.8)'}]},
+    options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false}},
+      scales:{x:{ticks:{callback:v=>'$'+fmt(v)}}}}});
+}
+function toggleHHI(){
+  const t=document.getElementById('hhiTable');const b=document.getElementById('hhiToggle');
+  const vis=t.style.display==='none';t.style.display=vis?'block':'none';b.textContent=vis?'Hide calculation':'Show calculation';
+}
+
+// ─── TAB 4: TIME INTELLIGENCE ─────────────────────────────────────────
+function buildT(d){
+  if(!d.monthly.length){document.getElementById('tcon').innerHTML='<div class="card"><h3>No date data found</h3></div>';return;}
+  const maxV=Math.max(...d.monthly.map(m=>m.v));
+  const minV=Math.min(...d.monthly.map(m=>m.v));
+  const deadTip=`<b>Dead Zone Definition</b>A month where spend falls more than 35% below your monthly average of ${da(d.avgM)}.<br><br>These months are your best forward-buying windows — suppliers are most motivated to commit annual volume when they know your orders are about to quiet down.`;
+  const mrows=d.monthly.map(m=>{
+    const dead=m.v<d.avgM*0.65,peak=m.v>d.avgM*1.4;
+    return`<tr style="${dead?'background:var(--rl)':peak?'background:var(--gl)':''}">
+      <td style="font-weight:700">${m.m}</td><td style="font-weight:700">${da(m.v)}</td>
+      <td><div class="bc"><div class="br ${dead?'r':peak?'g':''}" style="width:${Math.min(m.v/maxV*170,170)}px"></div><span class="pt">${(m.v/d.tot*100).toFixed(1)}%</span></div></td>
+      <td style="font-size:11px">${m.v>=d.avgM?'+':''}${((m.v-d.avgM)/d.avgM*100).toFixed(0)}%</td>
+      <td>${dead?'<span class="bdg br2">⚠️ DEAD ZONE</span>':peak?'<span class="bdg bg2">🔥 PEAK</span>':''}</td></tr>`;}).join('');
+  document.getElementById('tcon').innerHTML=`
+    <div class="cg">
+      <div class="met"><div class="ml">Avg Monthly Spend</div><div class="mv">${da(d.avgM)}</div><div class="ms">${d.monthly.length} months</div></div>
+      <div class="met r"><div class="ml">Dead Zone Months ${ii(deadTip)}</div><div class="mv">${d.dead.length}</div><div class="ms">&gt;35% below average</div></div>
+      <div class="met g"><div class="ml">Peak Month</div><div class="mv">${da(maxV)}</div><div class="ms">${d.monthly.find(m=>m.v===maxV)?.m||''}</div></div>
+      <div class="met a"><div class="ml">Lowest Month</div><div class="mv">${da(minV)}</div><div class="ms">${d.monthly.find(m=>m.v===minV)?.m||''}</div></div>
+    </div>
+    ${d.dead.length>0?`<div class="fn r"><div class="fni">📉</div><div><div class="fnt">Dead Zone Pattern Detected — Forward Buying Opportunity</div>
+      <div class="fnx">Months: <strong>${d.dead.map(m=>m.m).join(', ')}</strong> — each ran &gt;35% below your ${da(d.avgM)} monthly average. These are your forward-buying windows.</div></div></div>`:''}
+    <div class="card"><h3>📅 Monthly Spend Pattern</h3><div class="cw"><canvas id="tc"></canvas></div></div>
+    <div class="card"><h3>📋 Month-by-Month Detail ${ii(deadTip)}</h3>
+      <div class="ts"><table class="dt"><thead><tr><th>Month</th><th>Spend</th><th>% Total</th><th>vs Average</th><th>Pattern</th></tr></thead><tbody>${mrows}</tbody></table></div></div>`;
+  new Chart(document.getElementById('tc'),{type:'bar',
+    data:{labels:d.monthly.map(m=>m.m),
+      datasets:[{label:'Monthly Spend',data:d.monthly.map(m=>m.v),
+        backgroundColor:d.monthly.map(m=>m.v<d.avgM*0.65?'rgba(192,57,43,.75)':m.v>d.avgM*1.4?'rgba(30,124,58,.75)':'rgba(31,92,153,.75)')},
+        {type:'line',label:'Average',data:d.monthly.map(()=>d.avgM),borderColor:'#B8860B',borderWidth:2,borderDash:[5,3],pointRadius:0,fill:false}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{font:{size:11}}}},
+      scales:{y:{ticks:{callback:v=>'$'+fmt(v)}}}}});
+}
+
+// ─── TAB 5: PRICE VARIANCE ────────────────────────────────────────────
+function buildV(d){
+  const leak=d.vi.reduce((s,v)=>s+v.lk,0);
+  const leakTip=`<b>Leakage Formula</b><span class="fm">Leakage = Σ (actual price − best price)</span>For each material code: find the lowest unit price ever paid. For every purchase above that price, calculate the overpayment. Sum of all overpayments = leakage.<br><br>This is calculated from actual purchase records — not an estimate.`;
+  const rows=d.vi.slice(0,25).map(v=>`<tr>
+    <td style="font-size:11px;font-weight:700;color:var(--nv)">${v.mat||'NO CODE'}</td>
+    <td style="font-size:11px">${v.desc.substring(0,24)}</td>
+    <td style="color:var(--gn);font-weight:700">${da(v.minP)}</td>
+    <td style="color:var(--rd);font-weight:700">${da(v.maxP)}</td>
+    <td><span style="font-weight:900;color:${v.vp>100?'var(--rd)':v.vp>50?'var(--am)':'var(--dk)'}">${v.vp.toFixed(0)}%</span></td>
+    <td>${v.rows}</td>
+    <td style="font-weight:700;color:var(--rd)">${da(v.lk)}</td>
+    <td style="font-size:10px;color:var(--dk)">${v.lkCalc}</td></tr>`).join('');
+  document.getElementById('vcon').innerHTML=`
+    <div class="cg">
+      <div class="met r"><div class="ml">SKUs with Variance</div><div class="mv">${d.vi.length}</div><div class="ms">Same code, different prices</div></div>
+      <div class="met r"><div class="ml">Total Leakage ${ii(leakTip)}</div><div class="mv">${da(leak)}</div><div class="ms">Actual overpayment</div></div>
+      <div class="met a"><div class="ml">Avg Variance</div><div class="mv">${d.vi.length?Math.round(d.vi.reduce((s,v)=>s+v.vp,0)/d.vi.length):0}%</div><div class="ms">Across variant SKUs</div></div>
+      <div class="met"><div class="ml">High Priority (&gt;50%)</div><div class="mv">${d.vi.filter(v=>v.vp>50).length}</div><div class="ms">Fix urgently</div></div>
+    </div>
+    <div class="fn r"><div class="fni">💸</div><div><div class="fnt">Price Leakage — ${da(leak)} Total Overpaid</div>
+      <div class="fnx">${d.vi.length} material codes purchased at multiple different prices. No framework agreement = each PO priced ad-hoc. Fixing this with annual contracts at your best historical price is the fastest procurement saving available.</div></div></div>
+    <div class="card"><h3>⚠️ Price Variance Table ${ii(leakTip)}</h3>
+      <div class="ts"><table class="dt"><thead><tr><th>Material Code</th><th>Description</th><th>Best Price</th><th>Worst Price</th><th>Variance</th><th>PO Count</th><th>Leakage</th><th>Detail</th></tr></thead>
+      <tbody>${rows}</tbody></table></div></div>`;
+}
+
+// ─── TAB 6: OPPORTUNITY SUMMARY ───────────────────────────────────────
+function buildO(d){
+  const leak=d.vi.reduce((s,v)=>s+v.lk,0);
+  const top5=d.matP.slice(0,5);
+  const classASpend=d.matP.filter(m=>m.cum<=80).reduce((s,m)=>s+m.usd,0);
+  const consolSaving=classASpend*0.15;
+  const consolHigh=classASpend*0.20;
+  const total=consolSaving+leak;
+  const oppTip=`<b>How this summary is calculated</b>1. Consolidation saving = Class A spend × 15%<br>&nbsp;&nbsp;&nbsp;Class A spend = ${da(classASpend)}<br>&nbsp;&nbsp;&nbsp;${da(classASpend)} × 15% = ${da(consolSaving)}<br>&nbsp;&nbsp;&nbsp;(Al-Fanar achieved 20% → upper range = ${da(consolHigh)})<br><br>2. Leakage recovery = sum of all actual price overpayments from Price Variance tab = ${da(leak)}<br><br>3. Total = ${da(consolSaving)} + ${da(leak)} = ${da(total)}`;
+  document.getElementById('ocon').innerHTML=`
+    <div class="cg">
+      <div class="met g"><div class="ml">Total Opportunity ${ii(oppTip)}</div><div class="mv">${da(total)}</div><div class="ms">Conservative estimate</div></div>
+      <div class="met g"><div class="ml">Consolidation Saving ${ii(oppTip)}</div><div class="mv">${da(consolSaving)}</div><div class="ms">15% of ${da(classASpend)} Class A spend</div></div>
+      <div class="met a"><div class="ml">Leakage Recovery ${ii(`<b>Leakage Recovery</b>Sum of all actual price overpayments detected in Price Variance tab. Calculated from real purchase records.`)}</div><div class="mv">${da(leak)}</div><div class="ms">From price variance</div></div>
+      <div class="met"><div class="ml">Class A Spend</div><div class="mv">${da(classASpend)}</div><div class="ms">Materials driving 80% of spend</div></div>
+    </div>
+    <div class="card"><h3>🎯 Priority Action List ${ii(oppTip)}</h3>
+      <div class="ts"><table class="dt"><thead><tr><th>Priority</th><th>Action</th><th>Material</th><th>Est. Saving Range</th><th>Method</th></tr></thead>
+      <tbody>
+        ${top5.map((m,i)=>`<tr>
+          <td style="text-align:center;font-weight:900;color:var(--bl)">${i+1}</td>
+          <td style="font-size:11px">Annual volume consolidation</td>
+          <td style="font-size:11px"><strong>${m.mat||'NO CODE'}</strong> — ${m.desc.substring(0,22)}<br><span style="color:var(--dk)">${m.rows} lines · ${m.vends.length} vendor${m.vends.length>1?'s':''} · ${da(m.usd)}</span></td>
+          <td style="font-weight:700;color:var(--gn)">${da(m.usd*.15)} – ${da(m.usd*.20)}</td>
+          <td><span class="bdg bb2">Al-Fanar</span></td></tr>`).join('')}
+        ${d.vi.slice(0,3).map((v,i)=>`<tr>
+          <td style="text-align:center;font-weight:900;color:var(--am)">${top5.length+i+1}</td>
+          <td style="font-size:11px">Set framework price</td>
+          <td style="font-size:11px"><strong>${v.mat||'NO CODE'}</strong> — ${v.desc.substring(0,22)}<br><span style="color:var(--dk)">Best: ${da(v.minP)} · Worst: ${da(v.maxP)} · Gap: ${v.vp.toFixed(0)}%</span></td>
+          <td style="font-weight:700;color:var(--am)">${da(v.lk)}</td>
+          <td><span class="bdg ba2">Leakage Fix</span></td></tr>`).join('')}
+      </tbody></table></div></div>
+    ${d.an.neg.length?`<div class="card"><h3>↩️ Returns to Investigate</h3>
+      <p style="font-size:12px;color:var(--dk);margin-bottom:8px">Total returns: <strong>${da(Math.abs(d.an.neg.reduce((s,r)=>s+r.vusd,0)))}</strong> — investigate for quality rejection or supplier switching patterns.</p>
+      <div class="ts"><table class="dt"><thead><tr><th>Vendor</th><th>Material Code</th><th>Description</th><th>Return Value</th></tr></thead>
+      <tbody>${d.an.neg.slice(0,8).map(r=>`<tr><td style="font-size:11px">${r.vend.substring(0,28)}</td><td style="font-size:11px;font-weight:700">${r.mat||'NO CODE'}</td><td style="font-size:11px">${r.desc.substring(0,24)}</td><td style="color:var(--rd);font-weight:700">${da(Math.abs(r.vusd))}</td></tr>`).join('')}
+      </tbody></table></div></div>`:''}
+    <div class="card" style="background:var(--nv);color:#fff">
+      <h3 style="color:#fff;font-size:13px">💬 Ask the AI Brain</h3>
+      <p style="font-size:12px;color:#C8DDEF;line-height:1.6">Top opportunity: <strong style="color:#fff">${d.matP[0]?.desc.substring(0,34)||'your #1 material'}</strong> — ${da(d.matP[0]?.usd||0)} across ${d.matP[0]?.rows||0} PO lines from ${d.matP[0]?.vends.length||0} supplier(s).<br>Try: <em style="color:white">"Generate a negotiation brief for my top spend material"</em></p>
+    </div>`;
+}
+
+// ═══ AI BRAIN ════════════════════════════════════════════════════════
+function buildSum(d){
+  if(!d)return{};
+  return{
+    note:'All vendor/material names anonymised for privacy. Vendor_1=highest spend vendor, Material_1=highest spend material.',
+    overview:{totalSpend:Math.round(d.tot),currency:BCY,totalRows:d.N,cleanRows:d.Nc,
+      ghostOrders:d.Ng,returns:d.Nn,missingCodes:d.Nm,vendors:d.Uv,materials:d.Um,
+      dataQuality:d.qs,hhiScore:d.hhi,hhiRisk:d.hhi>5000?'EXTREME':d.hhi>2500?'HIGH':d.hhi>1500?'MODERATE':'LOW',
+      deadZones:d.dead.map(m=>m.m),activeExclusions:[...FLT_EXCL].map(v=>ANON_V[v]||v)},
+    topMaterials:d.matP.slice(0,15).map(m=>({id:ANON_M[m.mat||m.key]||'M_unknown',spend:Math.round(m.usd),share:+m.pct.toFixed(1),lines:m.rows,vendors:m.vends.length,class:m.cum<=80?'A':m.cum<=95?'B':'C'})),
+    topVendors:d.vendP.slice(0,15).map(v=>({id:ANON_V[v.vend]||'V_unknown',spend:Math.round(v.usd),share:+v.pct.toFixed(1),lines:v.rows,materialCodes:v.mats.length})),
+    priceVariance:d.vi.slice(0,8).map(v=>({id:ANON_M[v.mat||v.key]||'M_unknown',bestPrice:+v.minP.toFixed(2),worstPrice:+v.maxP.toFixed(2),variance:Math.round(v.vp),leakage:Math.round(v.lk)}))
+  };
+}
+function sysPmt(){
+  return`You are SCIP AI Brain. Built by Haitham Nimer (13+ years: Amazon MEL5, KB Seafood, Al-Fanar, PepsiCo). Core IP: Al-Fanar Methodology — $1M USD saved via Pareto + annual volume consolidation + fact-based negotiation.
+
+All vendor/material identifiers are anonymised. Use anonymised IDs in responses and actions.
+
+DATASET: ${JSON.stringify(ASUM,null,2)}
+
+PERSONA: Senior procurement consultant. Direct. Specific. Use exact numbers. No generic advice.
+
+RETURN ONLY VALID JSON — no backticks, no preamble:
+{"message":"Response","action":null}
+
+ACTIONS (only when explicitly requested):
+- exclude_vendors: {"type":"exclude_vendors","vendors":["Vendor_N"]}
+- include_vendors: {"type":"include_vendors","vendors":["Vendor_N"]}
+- update_fx_rate: {"type":"update_fx_rate","currency":"CHF","rate":1.15}
+- reset_filters: {"type":"reset_filters"}
+
+Quantify all changes. HHI = Σ(all vendor shares²) × 10,000.`;
+}
+async function callAPI(msg){
+  const key=gKey();if(!key)return null;
+  CHIST.push({role:'user',content:msg});
+  const res=await fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+    body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:1000,system:sysPmt(),messages:CHIST})
+  });
+  if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e.error?.message||`API error ${res.status}`);}
+  const data=await res.json();
+  const txt=data.content?.[0]?.text||'';
+  CHIST.push({role:'assistant',content:txt});
+  const clean=txt.replace(/^```json\s*/,'').replace(/\s*```$/,'').trim();
+  try{return JSON.parse(clean);}catch(e){return{message:txt,action:null};}
+}
+function execAction(act){
+  if(!act)return null;let res=null;
+  if(act.type==='exclude_vendors'){const rn=(act.vendors||[]).map(v=>ANON_VR[v]||v);rn.forEach(v=>FLT_EXCL.add(v));res=`✅ Excluded ${rn.length} vendor(s)`;}
+  else if(act.type==='include_vendors'){const rn=(act.vendors||[]).map(v=>ANON_VR[v]||v);rn.forEach(v=>FLT_EXCL.delete(v));res=`✅ Restored ${rn.length} vendor(s)`;}
+  else if(act.type==='update_fx_rate'&&act.currency&&act.rate){FX[act.currency]=act.rate;res=`✅ Updated ${act.currency} to ${act.rate}`;}
+  else if(act.type==='reset_filters'){FLT={from:null,to:null,vends:new Set(),mats:new Set()};FLT_EXCL=new Set();res='✅ All filters reset';}
+  if(res){refresh();buildChips();showToast(res);}
+  return res;
+}
+function addMsg(txt,role){
+  const msgs=document.getElementById('cpmsgs');
+  document.getElementById('nkm').style.display='none';
+  const d=document.createElement('div');d.className='cm '+role;
+  d.innerHTML=`<div class="cb">${esc(txt)}</div>`;msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight;return d;
+}
+function addAct(txt,el){const b=document.createElement('div');b.className='cab';b.textContent=txt;el.appendChild(b);}
+function showTyping(){const msgs=document.getElementById('cpmsgs');const t=document.createElement('div');t.className='ctyp';t.id='ctyping';t.textContent='⏳ Analysing...';msgs.appendChild(t);msgs.scrollTop=msgs.scrollHeight;return t;}
+async function sendMsg(){
+  const inp=document.getElementById('cpin');const msg=inp.value.trim();if(!msg)return;
+  inp.value='';document.getElementById('sbtn').disabled=true;
+  addMsg(msg,'us');const typ=showTyping();
+  try{const resp=await callAPI(msg);typ.remove();if(resp){const md=addMsg(resp.message,'ai');const ar=execAction(resp.action);if(ar)addAct(ar,md);}}
+  catch(e){typ.remove();addMsg('⚠️ '+(e.message||'Unknown error'),'ai');CHIST.pop();}
+  document.getElementById('sbtn').disabled=false;
+}
+async function initAI(){
+  if(!gKey()||!ADATA)return;
+  const typ=showTyping();
+  try{const resp=await callAPI('You have just read my anonymised procurement data. Introduce yourself briefly as SCIP AI Brain, then give your top 3 specific findings with exact numbers. End by asking what I want to explore first.');
+    typ.remove();if(resp){const md=addMsg(resp.message,'ai');const ar=execAction(resp.action);if(ar)addAct(ar,md);}}
+  catch(e){typ.remove();addMsg('👋 SCIP AI Brain ready. Ask me anything about your procurement data.','ai');}
+}
+const sg=txt=>{document.getElementById('cpin').value=txt;sendMsg();};
+const ck=e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMsg();}};
+
+// ═══ HELPERS ════════════════════════════════════════════════════════
+const sn2=v=>{if(v===null||v===undefined||v==='')return 0;if(typeof v==='number')return v;const n=parseFloat(String(v).replace(/[,$\s€£¥﷼]/g,''));return isNaN(n)?0:n;};
+const fmt=n=>{if(n>=1e9)return(n/1e9).toFixed(1)+'B';if(n>=1e6)return(n/1e6).toFixed(1)+'M';if(n>=1e3)return(n/1e3).toFixed(0)+'K';return Math.round(n).toLocaleString();};
+function da(usd){if(BCY==='USD')return'$'+fmt(usd);const r=FX[BCY]||1;return BCY+' '+fmt(usd/r);}
+const esc=t=>String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/\n/g,'<br>');
+function showTab(id,btn){document.querySelectorAll('.tc').forEach(t=>t.classList.remove('on'));document.querySelectorAll('.tb').forEach(b=>b.classList.remove('on'));document.getElementById(id).classList.add('on');btn.classList.add('on');}
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.style.display='block';setTimeout(()=>t.style.display='none',2800);}
+window.addEventListener('load',()=>{if(gKey())updAI();});
+document.addEventListener('click',e=>{if(!e.target.closest('#kdrop')&&!e.target.closest('.btn'))document.getElementById('kdrop').classList.remove('open');});
+</script>
+</body>
+</html>
