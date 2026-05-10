@@ -4,8 +4,17 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>SCIP v2 — Supply Chain Intelligence Platform</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script>
+// Load libraries with error detection
+var XLSX_LOADED = false;
+var CHART_LOADED = false;
+function checkLibs(){
+  if(typeof XLSX !== 'undefined') XLSX_LOADED = true;
+  if(typeof Chart !== 'undefined') CHART_LOADED = true;
+}
+</script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" onload="XLSX_LOADED=true" onerror="window._xlsxFailed=true"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" onload="CHART_LOADED=true" onerror="window._chartFailed=true"></script>
 <style>
 :root{--nv:#1B2A4A;--bl:#1F5C99;--lb:#D6E4F0;--tl:#0E7C7B;--gn:#1E7C3A;--gl:#D5F0DC;--am:#B8860B;--al:#FFF3CC;--rd:#C0392B;--rl:#FDECEA;--or:#C96A1E;--ol:#FDEBD0;--pu:#5B3A8E;--gy:#F4F6F9;--mg:#DDD;--dk:#555}
 *{box-sizing:border-box;margin:0;padding:0}
@@ -238,10 +247,10 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#F0F4F8;color:#1a1a1a;fo
   <div class="upcard" id="dz">
     <div style="font-size:38px;margin-bottom:11px">📂</div>
     <h2>Upload Your ERP Procurement Data</h2>
-    <p>Works with SAP, MYOB, Oracle, Pronto or any ERP export. No template required — columns mapped automatically.</p>
+    <p>Works with SAP, MYOB, Oracle, Pronto or any ERP export. <strong>CSV files always work</strong> — Excel files require a working internet connection to load the Excel library.</p>
     <div class="fmts">
       <span class="fmt">Excel .xlsx</span><span class="fmt">Excel .xls</span><span class="fmt">CSV .csv</span>
-      <span class="fmt">Any column names</span><span class="fmt">Multi-sheet</span><span class="fmt">Multi-currency</span>
+      <span class="fmt">CSV ✅ Always works</span><span class="fmt">Excel .xlsx</span><span class="fmt">Any column names</span><span class="fmt">Multi-currency</span>
     </div>
     <button class="bup" onclick="document.getElementById('fi').click()">Choose File</button>
     <input type="file" id="fi" accept=".xlsx,.xls,.csv" onchange="handleFile(this.files[0])" style="display:none">
@@ -477,12 +486,61 @@ dz.addEventListener('dragleave',()=>dz.classList.remove('drag'));
 dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('drag');if(e.dataTransfer.files[0])handleFile(e.dataTransfer.files[0]);});
 function handleFile(f){
   if(!f)return;_fn=f.name;
+  const isCSV=f.name.toLowerCase().endsWith('.csv');
+  // Check if XLSX loaded for Excel files
+  if(!isCSV && typeof XLSX === 'undefined'){
+    alert('The Excel reading library failed to load.\n\nPlease save your file as CSV from Excel:\n1. Open your file in Excel\n2. File → Save As → CSV (Comma delimited)\n3. Upload the CSV file instead\n\nCSV files work with no external libraries required.');
+    return;
+  }
   document.getElementById('upsec').style.display='none';
   document.getElementById('progsec').style.display='block';
   const steps=['Reading file structure...','Detecting currencies...','Mapping columns...','Flagging anomalies...','Preparing currency settings...'];
   document.getElementById('pgsteps').innerHTML=steps.map((s,i)=>`<div class="step" id="ps${i}"><div class="si">⏳</div><div class="st">${s}</div></div>`).join('');
-  const r=new FileReader();r.onload=async e=>{try{await runProg(e.target.result);}catch(err){alert('Error: '+err.message);}};
-  r.readAsArrayBuffer(f);
+  const r=new FileReader();
+  if(isCSV){
+    r.onload=async e=>{try{await runProgCSV(e.target.result);}catch(err){alert('CSV Error: '+err.message);}};
+    r.readAsText(f);
+  } else {
+    r.onload=async e=>{try{await runProg(e.target.result);}catch(err){alert('Error: '+err.message);}};
+    r.readAsArrayBuffer(f);
+  }
+}
+// Native CSV parser — no external library needed
+function parseCSV(text){
+  const lines=text.split(/\r?\n/);
+  const result=[];
+  for(const line of lines){
+    if(!line.trim())continue;
+    const row=[];let cur='',inQ=false;
+    for(let i=0;i<line.length;i++){
+      const c=line[i];
+      if(c==='"'){if(inQ&&line[i+1]==='"'){cur+='"';i++;}else inQ=!inQ;}
+      else if(c===','&&!inQ){row.push(cur.trim());cur='';}
+      else cur+=c;
+    }
+    row.push(cur.trim());
+    result.push(row);
+  }
+  return result;
+}
+async function runProgCSV(text){
+  const dl=ms=>new Promise(r=>setTimeout(r,ms));
+  const mk=(i,s)=>{const el=document.getElementById('ps'+i);if(!el)return;el.className='step '+s;el.querySelector('.si').textContent=s==='done'?'✅':s==='act'?'🔄':'❌';};
+  mk(0,'act');await dl(150);
+  const rows=parseCSV(text);
+  SHEETS={'Sheet1':rows};ASHT='Sheet1';mk(0);
+  mk(1,'act');await dl(150);
+  const cs=new Set();
+  if(rows.length>1){
+    const lc=(rows[0]||[]).map(h=>h?String(h).toLowerCase():'');
+    const ci=lc.findIndex(h=>h.includes('currency')||h==='curr'||h==='cur');
+    if(ci>=0)rows.slice(1).forEach(r=>{if(r&&r[ci])cs.add(String(r[ci]).trim().toUpperCase());});
+  }
+  DCCYS=[...cs].filter(c=>c&&c.length>=3&&c.length<=4&&/^[A-Z]+$/.test(c)&&c!=='NAN');
+  if(!DCCYS.length)DCCYS=['USD'];mk(1);
+  for(let i=2;i<=3;i++){mk(i,'act');await dl(120);mk(i);}
+  mk(4,'act');await dl(150);mk(4);await dl(220);
+  document.getElementById('progsec').style.display='none';showCMod();
 }
 async function runProg(buf){
   const dl=ms=>new Promise(r=>setTimeout(r,ms));
@@ -709,7 +767,7 @@ function buildQ(d){
       <div class="dqs" onmouseenter="showTip(this,'${scoreTip.replace(/\\/g,'\\\\').replace(/'/g,"\\'")}')" onmouseleave="hideTip()">
         <div class="dqsn">${d.qs}%</div>
         <div class="dqsl">Data Quality Score</div>
-        <div style="font-size:10px;color:${d.qs>=80?'#5DCAA5':d.qs>=60?'#FAC775':'#F09595'};margin-top:3px">${d.qs>=80?'Good':'d.qs>=60?Moderate':'Needs cleaning'}</div>
+        <div style="font-size:10px;color:${d.qs>=80?'#5DCAA5':d.qs>=60?'#FAC775':'#F09595'};margin-top:3px">${d.qs>=80?'Good':d.qs>=60?'Moderate':'Needs cleaning'}</div>
         <div class="dqs-hint">Hover for formula</div>
       </div>
       <div class="dqg" style="align-content:start">
